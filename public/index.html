@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Telefonnummern in öffentlichen Firmeneinträgen nachschlagen und Spam-Hinweise prüfen.">
+  <meta name="referrer" content="no-referrer">
+  <title>Rückwärtssuche · Telefonnummer nachschlagen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="14" cy="14" r="8" stroke="currentColor" stroke-width="2"/><path d="m20 20 7 7M11 10v3a6 6 0 0 0 6 6h1v-3h-3l-1-2v-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span>Rückwärtssuche</span>
+    </div>
+    <span class="local-label">Ohne Suchverlauf</span>
+  </header>
+
+  <main>
+    <section class="search-section" aria-labelledby="page-title">
+      <p class="eyebrow">TELEFONNUMMER NACHSCHLAGEN</p>
+      <h1 id="page-title">Wer hat angerufen?</h1>
+      <p class="intro">Öffentliche Firmeneinträge finden und Spam-Hinweise prüfen.</p>
+
+      <form id="search-form" autocomplete="off" novalidate>
+        <div class="form-row">
+          <div class="field phone-field">
+            <label for="phone">Telefonnummer</label>
+            <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="z. B. +49 30 123456" maxlength="100" autocomplete="off" spellcheck="false" required aria-describedby="input-hint form-error">
+          </div>
+          <div class="field country-field">
+            <label for="country">Land ohne internationale Vorwahl</label>
+            <select id="country" name="country" aria-describedby="input-hint"><option value="DE">Deutschland</option></select>
+          </div>
+          <button class="search-button" type="submit">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="2"/><path d="m16 16 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Suchen
+          </button>
+        </div>
+        <p id="input-hint" class="input-hint">Mit + oder 00 wird das Land automatisch erkannt.</p>
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+        <p id="country-error" class="input-hint" role="status" hidden></p>
+      </form>
+      <p class="privacy-note">Die Suche fragt OpenStreetMap und PhoneBlock ab. Nummern werden hier nicht gespeichert.</p>
+      <noscript><p class="form-error">Bitte aktiviere JavaScript, um die Suche zu verwenden.</p></noscript>
+    </section>
+
+    <div class="results-heading">
+      <h2 id="results-title">Ergebnisse</h2>
+      <p id="query-summary" class="query-summary" role="status" aria-live="polite"></p>
+    </div>
+    <div class="results-grid" aria-labelledby="results-title">
+      <section class="result-card" id="osm-card" aria-labelledby="osm-title">
+        <header class="card-header">
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 21V5l9-2v18M13 9l7 2v10M2 21h20M8 8v2m0 3v2m9-1v2M8 18v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><h3 id="osm-title">Firma oder Einrichtung</h3><p class="source-label">OpenStreetMap</p></div>
+        </header>
+        <div id="osm-status" class="provider-status" role="status" aria-live="polite" aria-atomic="true"></div>
+        <div id="osm-result" class="result-content"><p class="empty-copy">Zu welcher Firma gehört die Nummer?</p><p class="detail">Passende öffentliche Einträge erscheinen hier.</p></div>
+        <footer class="card-footer"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap-Mitwirkende · ODbL</a></footer>
+      </section>
+
+      <section class="result-card" id="phoneblock-card" aria-labelledby="phoneblock-title">
+        <header class="card-header">
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 3v5c0 5-4 8-8 10-4-2-8-5-8-10V6zM12 8v5m0 3v.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><h3 id="phoneblock-title">Spam-Hinweise</h3><p class="source-label">PhoneBlock</p></div>
+        </header>
+        <div id="phoneblock-status" class="provider-status" role="status" aria-live="polite" aria-atomic="true"></div>
+        <div id="phoneblock-result" class="result-content"><p class="empty-copy">Ist die Nummer bereits aufgefallen?</p><p class="detail">Verfügbare Bewertungen erscheinen hier.</p></div>
+        <footer class="card-footer"><a href="https://phoneblock.net/phoneblock/" target="_blank" rel="noopener noreferrer">Bewertungen der PhoneBlock-Community</a></footer>
+      </section>
+    </div>
+    <p class="coverage-note">Nicht jede Nummer ist öffentlich eingetragen. Die Suche ermittelt zunächst Firmen und Einrichtungen, keine Privatpersonen. Fehlende Spam-Hinweise sind keine Entwarnung.</p>
+  </main>
+  <footer class="site-footer"><span>Internationale Suche · Kostenlose Quellen</span><span>Die Verfügbarkeit der Ergebnisse hängt von den Quellen ab.</span></footer>
+</body>
+</html>
