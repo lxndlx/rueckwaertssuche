@@ -72,7 +72,59 @@ Sperre für zu viele Abfragen später manuell erneut versuchen.
 - Schriftarten, Skripte und Gestaltung werden lokal ausgeliefert. Beim Öffnen
   eines Quellenlinks wird die jeweilige externe Webseite aufgerufen.
 
-## Einstellungen und spätere Docker-Nutzung
+## Auf dem Homeserver mit Docker Compose starten
+
+Voraussetzung auf dem Homeserver: Git, Docker mit dem Befehl `docker compose`,
+Internetverbindung und ein freier Port 3000. Öffne dort ein Terminal und lade das
+öffentliche Repository herunter:
+
+```sh
+git clone https://github.com/lxndlx/rueckwaertssuche.git
+cd rueckwaertssuche
+docker compose up -d --build
+docker compose ps
+```
+
+Der Homeserver lädt beim ersten Start das Node-Image und die
+Programmabhängigkeiten aus dem Internet. Für das öffentliche Repository brauchst
+du beim Herunterladen über HTTPS kein GitHub-Konto.
+
+Nach späteren Änderungen im Repository aktualisierst du die Anwendung im selben
+Ordner mit:
+
+```sh
+git pull --ff-only
+docker compose up -d --build
+```
+
+Wenn bei `docker compose ps` der Dienst `rueckwaertssuche` als `healthy` angezeigt
+wird, öffne auf einem Gerät in deinem Heimnetz
+`http://IP-DEINES-HOMESERVERS:3000`. Setze dabei die tatsächliche IP-Adresse des
+Homeservers ein. Der erste Start kann wegen des Downloads einige Minuten dauern.
+Falls die Seite nicht erreichbar ist, prüfe die Firewall des Homeservers und
+die Meldungen mit `docker compose logs --tail=50 rueckwaertssuche`.
+
+Port 3000 ist auf dem Homeserver bereits belegt? Lege im Projektordner eine
+Datei namens `.env` mit folgendem Inhalt an:
+
+```ini
+WEB_PORT=3001
+```
+
+Starte dann erneut mit `docker compose up -d --build` und öffne die Seite über
+Port 3001. Wenn ein Reverse Proxy **direkt auf dem Homeserver** läuft, kann die
+Veröffentlichung auf den Homeserver selbst beschränkt werden, indem du zusätzlich
+`BIND_ADDRESS=127.0.0.1` in `.env` einträgst. Ohne diese Einstellung ist die
+Seite über alle Netzwerkschnittstellen des Homeservers erreichbar. Sie hat keine
+Benutzeranmeldung; richte deshalb keine Portfreigabe vom Internet-Router auf
+diesen Dienst ein.
+
+Zum Beenden: `docker compose down`. Die Anwendung braucht keine Datenbank und
+keine Speicherordner auf dem Homeserver; Suchanfragen werden von ihr nicht gespeichert.
+Der Container startet nach einem Neustart des Homeservers automatisch wieder,
+solange er nicht mit `docker compose down` entfernt wurde.
+
+## Einstellungen für den Start ohne Docker
 
 Kopiere bei Bedarf `.env.example` nach `.env`. Die Voreinstellungen sind:
 
@@ -84,12 +136,10 @@ PORT=3000
 Falls Port 3000 belegt ist, ändere beispielsweise `PORT=3001` und starte die App
 neu. Die Adresse lautet dann `http://127.0.0.1:3001`.
 
-Ein einzelner Node-Prozess liefert Oberfläche und Schnittstelle aus; dauerhafte
-Speichervolumes werden nicht benötigt. Damit ist die Anwendung für den späteren
-Docker-Betrieb vorbereitet. Docker-Dateien und Homeserver-Installation gehören
-zum zweiten Schritt. `HOST` bleibt in dieser Version auf der lokalen Adresse.
-Ein abweichender Host kann Netzwerkzugriff ermöglichen; eine Anmeldung ist in
-dieser lokalen Version nicht vorgesehen.
+Beim Start ohne Docker bleibt `HOST` standardmäßig auf der lokalen Adresse.
+Ein abweichender Host kann Netzwerkzugriff ermöglichen; eine Anmeldung ist nicht
+vorgesehen. Die Docker-Einstellungen `WEB_PORT` und `BIND_ADDRESS` in `.env`
+gelten nur für Docker Compose; `HOST` und `PORT` gelten für `npm start`.
 
 ## Entwicklung und Tests
 

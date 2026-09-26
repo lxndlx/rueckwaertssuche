@@ -19,8 +19,14 @@ export function createApp({ providers = createProviders(), localOnly = true } = 
     if (localOnly && !['localhost', '127.0.0.1', '[::1]'].includes(req.hostname)) {
       return res.status(403).json({ error: 'Die Seite ist nur lokal erreichbar.' });
     }
-    if (req.path.startsWith('/api/') && req.get('origin') && req.get('origin') !== `${req.protocol}://${req.get('host')}`) {
-      return res.status(403).json({ error: 'Diese Abfrage ist nur von der lokalen Seite aus möglich.' });
+    if (req.path.startsWith('/api/') && req.get('origin')) {
+      let sameHost = false;
+      try {
+        const origin = new URL(req.get('origin'));
+        sameHost = ['http:', 'https:'].includes(origin.protocol)
+          && origin.host === req.get('host')?.toLowerCase();
+      } catch { /* An invalid Origin is treated as foreign. */ }
+      if (!sameHost) return res.status(403).json({ error: 'Diese Abfrage ist nur von der lokalen Seite aus möglich.' });
     }
     next();
   });

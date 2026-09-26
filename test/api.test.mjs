@@ -4,8 +4,8 @@ import { once } from 'node:events';
 import { request as httpRequest } from 'node:http';
 import { createApp } from '../src/app.mjs';
 
-async function withApp(t, providers) {
-  const server = createApp({ providers }).listen(0, '127.0.0.1');
+async function withApp(t, providers, options = {}) {
+  const server = createApp({ providers, ...options }).listen(0, '127.0.0.1');
   await once(server, 'listening');
   t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -72,6 +72,32 @@ test('cross-site origins and non-local Host headers cannot use local lookup', as
     request.end(JSON.stringify(body));
   });
   assert.equal(status, 403);
+});
+
+test('a matching HTTPS origin works behind a local TLS reverse proxy', async t => {
+  const api = await withApp(t, { lookup: async source => ({ source, status: 'not_found', results: [] }) });
+  const host = new URL(api.base).host;
+  const response = await api.post({ phone: '+49302426881', source: 'osm' }, {
+    headers: { Origin: `https://${host}` },
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).status, 'not_found');
+});
+
+test('container mode accepts a request addressed to the homeserver', async t => {
+  const api = await withApp(t, { lookup: async source => ({ source, status: 'not_found', results: [] }) }, { localOnly: false });
+  const status = await new Promise((resolve, reject) => {
+    const request = httpRequest(`${api.base}/api/lookup`, {
+      method: 'POST', headers: {
+        Host: 'homeserver.local:3000',
+        Origin: 'http://homeserver.local:3000',
+        'Content-Type': 'application/json',
+      },
+    }, response => { response.resume(); resolve(response.statusCode); });
+    request.on('error', reject);
+    request.end(JSON.stringify({ phone: '+49302426881', source: 'osm' }));
+  });
+  assert.equal(status, 200);
 });
 
 test('static page and country list work without any external requests', async t => {
