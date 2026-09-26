@@ -52,6 +52,16 @@
       <h2 id="results-title">Ergebnisse</h2>
       <p id="query-summary" class="query-summary" role="status" aria-live="polite"></p>
     </div>
+    <section id="area-card" class="area-card" aria-labelledby="area-title" hidden>
+      <div>
+        <h3 id="area-title">Vorwahlgebiet</h3>
+        <p id="area-status" class="area-status" role="status" aria-live="polite"></p>
+      </div>
+      <div class="area-explanation">
+        <p>Die Vorwahl zeigt das zugeordnete Gebiet, nicht den tatsächlichen Standort des Anrufers.</p>
+        <a href="https://github.com/google/libphonenumber" target="_blank" rel="noopener noreferrer">Quelle: libphonenumber</a>
+      </div>
+    </section>
     <div class="results-grid" aria-labelledby="results-title">
       <section class="result-card" id="osm-card" aria-labelledby="osm-title">
         <header class="card-header">

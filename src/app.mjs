@@ -2,10 +2,11 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { countries, InputError, normalizePhone } from './phone.mjs';
 import { createProviders } from './providers.mjs';
+import { lookupArea } from './area.mjs';
 
 const publicDir = fileURLToPath(new URL('../public/', import.meta.url));
 
-export function createApp({ providers = createProviders(), localOnly = true } = {}) {
+export function createApp({ providers = createProviders(), areaLookup = lookupArea, localOnly = true } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.set('etag', false);
@@ -35,7 +36,7 @@ export function createApp({ providers = createProviders(), localOnly = true } = 
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
   app.post('/api/lookup', async (req, res) => {
     const { phone: input, country = 'DE', source } = req.body ?? {};
-    if (!['osm', 'phoneblock'].includes(source)) {
+    if (!['area', 'osm', 'phoneblock'].includes(source)) {
       return res.status(400).json({ error: 'Bitte wähle eine unterstützte Suchquelle.' });
     }
     let phone;
@@ -43,6 +44,17 @@ export function createApp({ providers = createProviders(), localOnly = true } = 
     catch (error) {
       if (error instanceof InputError) return res.status(400).json({ error: error.message });
       throw error;
+    }
+    if (source === 'area') {
+      try {
+        const area = await areaLookup(phone);
+        return res.json({ phone, source, status: area ? 'found' : 'not_found', results: area ? [area] : [] });
+      } catch {
+        return res.json({
+          phone, source, status: 'unavailable', results: [],
+          error: { code: 'unavailable', message: 'Die Vorwahldaten sind gerade nicht verfügbar.' },
+        });
+      }
     }
     const controller = new AbortController();
     res.on('close', () => { if (!res.writableEnded) controller.abort(); });

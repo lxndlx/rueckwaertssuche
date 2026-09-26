@@ -100,6 +100,28 @@ test('container mode accepts a request addressed to the homeserver', async t => 
   assert.equal(status, 200);
 });
 
+test('area lookup is local and remains available when external sources fail', async t => {
+  const api = await withApp(t, { lookup: async () => assert.fail('No upstream call expected') });
+  const response = await api.post({ phone: '030 2426881', country: 'DE', source: 'area' });
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.phone.number, '+49302426881');
+  assert.equal(result.status, 'found');
+  assert.deepEqual(result.results, [{ name: 'Berlin' }]);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+});
+
+test('missing area data has a distinct unavailable state', async t => {
+  const api = await withApp(t, { lookup: async () => assert.fail('No upstream call expected') }, {
+    areaLookup: async () => { throw new Error('filesystem detail must not be exposed'); },
+  });
+  const response = await api.post({ phone: '+49302426881', source: 'area' });
+  const result = await response.json();
+  assert.equal(result.status, 'unavailable');
+  assert.equal(result.error.code, 'unavailable');
+  assert.doesNotMatch(JSON.stringify(result), /filesystem detail/);
+});
+
 test('static page and country list work without any external requests', async t => {
   const api = await withApp(t, { lookup: async () => assert.fail('No upstream call expected') });
   const page = await fetch(api.base);

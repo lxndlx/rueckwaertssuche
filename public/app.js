@@ -1,8 +1,12 @@
 const form = document.querySelector('#search-form');
 const phoneInput = document.querySelector('#phone');
 const countrySelect = document.querySelector('#country');
+const countryField = countrySelect.closest('.field');
+const formRow = form.querySelector('.form-row');
 const errorBox = document.querySelector('#form-error');
 const summary = document.querySelector('#query-summary');
+const areaCard = document.querySelector('#area-card');
+const areaStatus = document.querySelector('#area-status');
 const sources = ['osm', 'phoneblock'];
 const initialContent = new Map(sources.map(source => [source, document.querySelector(`#${source}-result`).cloneNode(true)]));
 let currentSearch = 0;
@@ -40,18 +44,43 @@ function reset() {
   form.reset();
   countrySelect.value = 'DE';
   countrySelect.disabled = false;
+  countryField.hidden = false;
+  delete formRow.dataset.international;
   phoneInput.removeAttribute('aria-invalid');
   errorBox.hidden = true;
   errorBox.textContent = '';
   summary.textContent = '';
+  areaCard.hidden = true;
+  areaCard.setAttribute('aria-busy', 'false');
+  areaStatus.textContent = '';
   for (const source of sources) {
     setStatus(source, 'idle', '');
     document.querySelector(`#${source}-result`).replaceChildren(...initialContent.get(source).cloneNode(true).childNodes);
   }
 }
 
+function setArea(state, text) {
+  areaCard.hidden = false;
+  areaCard.setAttribute('aria-busy', String(state === 'loading'));
+  areaStatus.textContent = text;
+}
+
+function renderArea(payload) {
+  if (payload.status === 'found' && payload.results?.[0]?.name) {
+    setArea('found', payload.results[0].name);
+  } else if (payload.status === 'unavailable') {
+    setArea('unavailable', payload.error?.message || 'Die Vorwahldaten sind gerade nicht verfügbar.');
+  } else {
+    setArea('not_found', 'Kein eindeutiges Vorwahlgebiet ermittelbar.');
+  }
+}
+
 function updateCountryMode() {
-  countrySelect.disabled = /^(?:\+|00)/.test(phoneInput.value.trim());
+  const international = /^(?:\+|00)/.test(phoneInput.value.trim());
+  countrySelect.disabled = international;
+  countryField.hidden = international;
+  if (international) formRow.dataset.international = 'true';
+  else delete formRow.dataset.international;
 }
 
 function showInputError(message) {
@@ -119,6 +148,7 @@ async function lookup(source, request, searchId, signal) {
     if (searchId !== currentSearch || signal.aborted) return;
     if (response.status === 400) {
       controller.abort();
+      areaCard.hidden = true;
       for (const provider of sources) {
         setStatus(provider, 'idle', '');
         document.querySelector(`#${provider}-result`).replaceChildren(...initialContent.get(provider).cloneNode(true).childNodes);
@@ -132,9 +162,14 @@ async function lookup(source, request, searchId, signal) {
     if (payload.phone.country && countrySelect.querySelector(`option[value="${payload.phone.country}"]`)) {
       countrySelect.value = payload.phone.country;
     }
-    render(source, payload);
+    if (source === 'area') renderArea(payload);
+    else render(source, payload);
   } catch {
     if (searchId !== currentSearch || signal.aborted) return;
+    if (source === 'area') {
+      renderArea({ status: 'unavailable' });
+      return;
+    }
     render(source, {
       status: 'unavailable',
       error: { message: 'Die Abfrage konnte nicht abgeschlossen werden. Bitte prüfe, ob der lokale Server läuft, und versuche es erneut.' },
@@ -157,6 +192,7 @@ form.addEventListener('submit', async event => {
   phoneInput.removeAttribute('aria-invalid');
   if (!request.phone) {
     pendingKey = null;
+    areaCard.hidden = true;
     for (const source of sources) {
       setStatus(source, 'idle', '');
       document.querySelector(`#${source}-result`).replaceChildren(...initialContent.get(source).cloneNode(true).childNodes);
@@ -166,11 +202,12 @@ form.addEventListener('submit', async event => {
     return;
   }
   summary.textContent = 'Die Quellen werden unabhängig abgefragt …';
+  setArea('loading', 'Wird ermittelt …');
   for (const source of sources) {
     setStatus(source, 'loading', 'Wird abgefragt …');
     document.querySelector(`#${source}-result`).replaceChildren(textElement('p', 'Die Suche kann bis zu 20 Sekunden dauern.', 'detail'));
   }
-  await Promise.allSettled(sources.map(source => lookup(source, request, searchId, signal)));
+  await Promise.allSettled(['area', ...sources].map(source => lookup(source, request, searchId, signal)));
   if (searchId === currentSearch) pendingKey = null;
 });
 

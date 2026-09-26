@@ -39,6 +39,15 @@ lokale Server die Datenquellen abfragt.
 
 ## Was die Suche leisten kann
 
+**Vorwahlgebiet:** Bei einer zuordenbaren Festnetzvorwahl wird die Stadt,
+Gemeinde oder Region oberhalb der anderen Ergebnisse angezeigt. Die Daten stammen
+aus libphonenumber und werden lokal auf dem Server gelesen; dafür ist keine
+zusätzliche Internetabfrage nötig. Deutschland, Österreich und die Schweiz werden
+abgedeckt, ebenso weitere Länder mit passenden Vorwahldaten. Für Mobilfunk- und
+Sonderrufnummern ohne eindeutiges Gebiet erscheint eine entsprechende Meldung.
+Das Vorwahlgebiet beschreibt die Nummer im Nummernplan. Es belegt weder den
+aktuellen Standort noch die Identität des Anrufers.
+
 **Firmen und Einrichtungen:** OpenStreetMap enthält freiwillig erfasste Einträge,
 kein vollständiges Telefonbuch. Gesucht wird weltweit in den Feldern `phone` und
 `contact:phone` nach international gespeicherten Nummern mit `+` oder `00`.
@@ -172,7 +181,7 @@ Der normale Start mit `npm start` nutzt immer die echten Datenquellen.
 { "phone": "030 2426881", "country": "DE", "source": "osm" }
 ```
 
-`source` ist `osm` oder `phoneblock`. Die Antwort enthält `phone` (normalisierte
+`source` ist `area`, `osm` oder `phoneblock`. Die Antwort enthält `phone` (normalisierte
 Nummer, Anzeigeformat, Land), `source`, `status` und `results`. `status` ist
 `found`, `not_found` oder `unavailable`; beim letzten Zustand enthält `error`
 einen maschinenlesbaren `code` und eine deutsche `message`. Eingabefehler liefern
@@ -193,3 +202,5 @@ Sie ist nicht die Quelle der normalen Anwendung.
 - [PhoneBlock-API](https://phoneblock.net/phoneblock/api)
 - [PhoneBlock-Projekt](https://github.com/haumacher/phoneblock)
 - [libphonenumber-js](https://github.com/catamphetamine/libphonenumber-js)
+- [libphonenumber-Vorwahldaten](https://github.com/google/libphonenumber) (Apache-2.0-Lizenz)
+- [JavaScript-Adapter für die Vorwahldaten](https://github.com/mmende/libphonenumber-geo-carrier)
