@@ -16,10 +16,11 @@
       <svg class="brand-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="14" cy="14" r="8" stroke="currentColor" stroke-width="2"/><path d="m20 20 7 7M11 10v3a6 6 0 0 0 6 6h1v-3h-3l-1-2v-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
       <span>Rückwärtssuche</span>
     </div>
-    <span class="local-label">Ohne Suchverlauf</span>
+    <span class="local-label">Verlauf nur im Browser</span>
   </header>
 
   <main>
+    <p id="preview-notice" class="preview-notice" role="status" hidden>Nur Testdaten: Diese Vorschau fragt OpenStreetMap und PhoneBlock nicht ab. Für echte Ergebnisse öffne die mit <code>npm start</code> oder Docker Compose gestartete Anwendung.</p>
     <section class="search-section" aria-labelledby="page-title">
       <p class="eyebrow">TELEFONNUMMER NACHSCHLAGEN</p>
       <h1 id="page-title">Wer hat angerufen?</h1>
@@ -40,11 +41,20 @@
             Suchen
           </button>
         </div>
+        <div class="recent-row">
+          <div class="field recent-field">
+            <label for="recent-numbers">Zuletzt gesucht</label>
+            <select id="recent-numbers" aria-describedby="recent-hint" disabled><option value="">Noch keine Nummern gespeichert</option></select>
+          </div>
+          <button id="clear-recent" class="clear-button" type="button" disabled>Liste löschen</button>
+        </div>
+        <p id="recent-hint" class="input-hint">Die Auswahl startet die Suche sofort.</p>
+        <p id="recent-error" class="form-error" role="status" hidden></p>
         <p id="input-hint" class="input-hint">Mit + oder 00 wird das Land automatisch erkannt.</p>
         <p id="form-error" class="form-error" role="alert" hidden></p>
         <p id="country-error" class="input-hint" role="status" hidden></p>
       </form>
-      <p class="privacy-note">Die Suche fragt OpenStreetMap und PhoneBlock ab. Nummern werden hier nicht gespeichert.</p>
+      <p class="privacy-note">Die Suche fragt OpenStreetMap und PhoneBlock ab. Die letzten 20 gesuchten Nummern werden nur in diesem Browser gespeichert und können gelöscht werden. Auf dem Server gibt es keinen Suchverlauf.</p>
       <noscript><p class="form-error">Bitte aktiviere JavaScript, um die Suche zu verwenden.</p></noscript>
     </section>
 

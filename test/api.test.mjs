@@ -136,3 +136,16 @@ test('static page and country list work without any external requests', async t 
   assert.ok(countries.some(country => country.code === 'JP'));
   assert.equal((await fetch(`${api.base}/.env`)).status, 404);
 });
+
+test('preview responses are marked as test data while normal responses are not', async t => {
+  const providers = { lookup: async source => ({ source, status: 'not_found', results: [] }) };
+  const preview = await withApp(t, providers, { previewMode: true });
+  const normal = await withApp(t, providers);
+  for (const path of ['/api/countries', '/api/lookup']) {
+    const request = path === '/api/lookup'
+      ? api => api.post({ phone: '030 2426881', country: 'DE', source: 'osm' })
+      : api => fetch(`${api.base}${path}`);
+    assert.equal((await request(preview)).headers.get('x-preview-mode'), '1');
+    assert.equal((await request(normal)).headers.get('x-preview-mode'), null);
+  }
+});

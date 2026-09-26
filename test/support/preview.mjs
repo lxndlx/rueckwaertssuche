@@ -20,7 +20,7 @@ const providers = {
     };
   },
 };
-const server = createApp({ providers }).listen(0, '127.0.0.1', () => {
+const server = createApp({ providers, previewMode: true }).listen(0, '127.0.0.1', () => {
   console.log(`NUR TESTDATEN: http://127.0.0.1:${server.address().port}`);
 });
 process.on('SIGINT', () => { server.close(); server.closeAllConnections(); });

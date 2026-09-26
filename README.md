@@ -36,6 +36,10 @@ lokale Server die Datenquellen abfragt.
   gewartet; nach Fehlern wird nicht automatisch erneut gesucht.
 - Ein fehlender Treffer, eine nicht erreichbare Quelle und eine ungültige Eingabe
   werden unterschiedlich angezeigt.
+- Die letzten 20 gültig gesuchten Nummern stehen unter „Zuletzt gesucht“ zur Auswahl.
+  Die Auswahl startet sofort eine neue Suche. Dieselbe Nummer erscheint auch bei
+  unterschiedlicher Schreibweise nur einmal. Mit „Liste löschen“ entfernst du alle
+  gespeicherten Nummern in diesem Browser.
 
 ## Was die Suche leisten kann
 
@@ -70,11 +74,14 @@ Sperre für zu viele Abfragen später manuell erneut versuchen.
 
 ## Speicherung und externe Abfragen
 
-- Kein Suchverlauf, keine Datenbank, keine Cookies und kein Browser-Speicher.
+- Die letzten 20 gültig gesuchten Nummern werden im lokalen Speicher dieses Browsers
+  abgelegt. Die Liste ist pro Browser und Gerät getrennt und bleibt nach dem Neuladen
+  erhalten. „Liste löschen“ entfernt sie jederzeit; auch das Löschen der Websitedaten
+  im Browser entfernt sie. Es gibt keine Datenbank und keine Cookies.
 - Keine Protokollierung von Telefonnummern oder Anfrageinhalten durch die App.
 - Antworten werden mit `Cache-Control: no-store` ausgeliefert. Beim Neuladen wird
   das Formular zurückgesetzt. Ergebnisse leben nur im Arbeitsspeicher während
-  der aktuellen Nutzung.
+  der aktuellen Nutzung; nur die Nummernliste bleibt im Browser gespeichert.
 - Erst beim Absenden wird die normalisierte Telefonnummer an OpenStreetMap /
   Overpass und PhoneBlock übertragen. Diese externen Dienste haben eigene
   Betriebs- und Datenschutzregeln; deren Speicherung steuert diese App nicht.
@@ -168,6 +175,9 @@ Dieser gesonderte Prüflauf fragt einen öffentlichen Firmeneintrag und die
 PhoneBlock-Testinstallation ab. Er ist nicht Teil von `npm test`.
 
 Für Browserprüfungen ohne externe Anfragen: `node test/support/preview.mjs`.
+Diese Vorschau verwendet feste Testdaten, läuft auf einem zufälligen Port und zeigt
+oben auf der Seite einen Hinweis „Nur Testdaten“. Echte Suchen erfolgen über
+die mit `npm start` oder Docker Compose gestartete Anwendung.
 Die ausgegebene lokale Adresse nutzt ausschließlich feste Testdaten: eine
 deutsche Nummer zeigt zwei Einträge und einen Spam-Hinweis, eine US-Nummer einen
 Quellenfehler neben einem Spam-Hinweis, eine britische Nummer keinen Treffer.

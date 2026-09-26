@@ -1,3 +1,5 @@
+import { clearRecent, loadRecent, saveRecent } from './recent.js';
+
 const form = document.querySelector('#search-form');
 const phoneInput = document.querySelector('#phone');
 const countrySelect = document.querySelector('#country');
@@ -7,17 +9,55 @@ const errorBox = document.querySelector('#form-error');
 const summary = document.querySelector('#query-summary');
 const areaCard = document.querySelector('#area-card');
 const areaStatus = document.querySelector('#area-status');
+const recentSelect = document.querySelector('#recent-numbers');
+const clearRecentButton = document.querySelector('#clear-recent');
+const recentError = document.querySelector('#recent-error');
 const sources = ['osm', 'phoneblock'];
 const initialContent = new Map(sources.map(source => [source, document.querySelector(`#${source}-result`).cloneNode(true)]));
 let currentSearch = 0;
 let controller;
 let pendingKey = null;
+let recentStorage;
+let recentEntries = [];
+let recentSavedSearch = 0;
 
 function textElement(tag, text, className) {
   const element = document.createElement(tag);
   element.textContent = text;
   if (className) element.className = className;
   return element;
+}
+
+function renderRecent() {
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = recentEntries.length ? 'Nummer auswählen …' : 'Noch keine Nummern gespeichert';
+  recentSelect.replaceChildren(placeholder, ...recentEntries.map(entry => {
+    const option = document.createElement('option');
+    option.value = entry.number;
+    option.textContent = entry.formatted;
+    return option;
+  }));
+  recentSelect.value = '';
+  recentSelect.disabled = !recentStorage || recentEntries.length === 0;
+  clearRecentButton.disabled = !recentStorage || recentEntries.length === 0;
+}
+
+function recentStorageFailed() {
+  recentStorage = undefined;
+  recentEntries = [];
+  renderRecent();
+  recentError.textContent = 'Der Browser kann die Liste gerade nicht speichern. Bitte prüfe seine Speicher-Einstellungen.';
+  recentError.hidden = false;
+}
+
+function rememberSearch(phone, searchId) {
+  if (!recentStorage || recentSavedSearch === searchId) return;
+  recentSavedSearch = searchId;
+  try {
+    recentEntries = saveRecent(recentStorage, phone);
+    renderRecent();
+  } catch { recentStorageFailed(); }
 }
 
 function link(text, href) {
@@ -42,6 +82,7 @@ function reset() {
   controller?.abort();
   pendingKey = null;
   form.reset();
+  recentSelect.value = '';
   countrySelect.value = 'DE';
   countrySelect.disabled = false;
   countryField.hidden = false;
@@ -158,10 +199,9 @@ async function lookup(source, request, searchId, signal) {
       return;
     }
     if (!response.ok) throw new Error('Request failed');
+    if (response.headers.get('X-Preview-Mode') === '1') document.querySelector('#preview-notice').hidden = false;
+    rememberSearch(payload.phone, searchId);
     summary.textContent = `${payload.phone.formatted} · ${payload.phone.countryName}`;
-    if (payload.phone.country && countrySelect.querySelector(`option[value="${payload.phone.country}"]`)) {
-      countrySelect.value = payload.phone.country;
-    }
     if (source === 'area') renderArea(payload);
     else render(source, payload);
   } catch {
@@ -211,6 +251,33 @@ form.addEventListener('submit', async event => {
   if (searchId === currentSearch) pendingKey = null;
 });
 
+recentSelect.addEventListener('change', () => {
+  const entry = recentEntries.find(item => item.number === recentSelect.value);
+  recentSelect.value = '';
+  if (!entry) return;
+  phoneInput.value = entry.formatted;
+  updateCountryMode();
+  form.requestSubmit();
+});
+
+clearRecentButton.addEventListener('click', () => {
+  if (!recentStorage) return;
+  try {
+    clearRecent(recentStorage);
+    recentEntries = [];
+    recentSavedSearch = currentSearch;
+    renderRecent();
+  } catch { recentStorageFailed(); }
+});
+
+window.addEventListener('storage', () => {
+  if (!recentStorage) return;
+  try {
+    recentEntries = loadRecent(recentStorage);
+    renderRecent();
+  } catch { recentStorageFailed(); }
+});
+
 phoneInput.addEventListener('input', () => {
   updateCountryMode();
   phoneInput.removeAttribute('aria-invalid');
@@ -219,8 +286,14 @@ phoneInput.addEventListener('input', () => {
 window.addEventListener('pageshow', event => { if (event.persisted) reset(); });
 reset();
 try {
+  recentStorage = window.localStorage;
+  recentEntries = loadRecent(recentStorage);
+  renderRecent();
+} catch { recentStorageFailed(); }
+try {
   const response = await fetch('/api/countries', { cache: 'no-store' });
   if (!response.ok) throw new Error('Countries unavailable');
+  if (response.headers.get('X-Preview-Mode') === '1') document.querySelector('#preview-notice').hidden = false;
   const countries = await response.json();
   const selected = countrySelect.value;
   countrySelect.replaceChildren(...countries.map(country => {

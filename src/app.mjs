@@ -6,7 +6,7 @@ import { lookupArea } from './area.mjs';
 
 const publicDir = fileURLToPath(new URL('../public/', import.meta.url));
 
-export function createApp({ providers = createProviders(), areaLookup = lookupArea, localOnly = true } = {}) {
+export function createApp({ providers = createProviders(), areaLookup = lookupArea, localOnly = true, previewMode = false } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.set('etag', false);
@@ -17,6 +17,7 @@ export function createApp({ providers = createProviders(), areaLookup = lookupAr
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     });
+    if (previewMode) res.set('X-Preview-Mode', '1');
     if (localOnly && !['localhost', '127.0.0.1', '[::1]'].includes(req.hostname)) {
       return res.status(403).json({ error: 'Die Seite ist nur lokal erreichbar.' });
     }
